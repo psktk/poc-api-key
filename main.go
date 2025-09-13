@@ -14,6 +14,21 @@ const allowedIP = "127.0.0.1"
 const apiKeyHeader = "X-API-Key"
 const validAPIKey = "supersecretkey"
 
+// SERVER-SIDE ONLY: API KEY INJECTION FOR TRUSTED INTERNAL IPs
+//
+// This logic MUST NOT be done on the client side.
+// Only the server should inject the API key for requests originating from trusted internal IPs.
+func injectAPIKey(c *gin.Context) {
+	ip := c.ClientIP()
+	if ip == "::1" {
+		ip = "127.0.0.1"
+	}
+	if ip == allowedIP {
+		c.Request.Header.Set("X-API-Key", validAPIKey)
+	}
+	c.Next()
+}
+
 type Product struct {
 	ID    int    `json:"id"`
 	Name  string `json:"name"`
@@ -49,16 +64,7 @@ func main() {
 	}
 
 	r := gin.Default()
-	r.Use(func(c *gin.Context) {
-		ip := c.ClientIP()
-		if ip == "::1" {
-			ip = "127.0.0.1"
-		}
-		if ip == allowedIP {
-			c.Request.Header.Set("X-API-Key", validAPIKey)
-		}
-		c.Next()
-	})
+	r.Use(injectAPIKey)
 	r.Use(func(c *gin.Context) {
 		key := c.GetHeader(apiKeyHeader)
 		if key != validAPIKey {
