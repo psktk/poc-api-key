@@ -29,6 +29,15 @@ func injectAPIKey(c *gin.Context) {
 	c.Next()
 }
 
+func checkAPIKey(c *gin.Context) {
+	key := c.GetHeader(apiKeyHeader)
+	if key != validAPIKey {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid API key"})
+		return
+	}
+	c.Next()
+}
+
 type Product struct {
 	ID    int    `json:"id"`
 	Name  string `json:"name"`
@@ -65,14 +74,7 @@ func main() {
 
 	r := gin.Default()
 	r.Use(injectAPIKey)
-	r.Use(func(c *gin.Context) {
-		key := c.GetHeader(apiKeyHeader)
-		if key != validAPIKey {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid API key"})
-			return
-		}
-		c.Next()
-	})
+	r.Use(checkAPIKey)
 
 	r.POST("/products", func(c *gin.Context) {
 		var p Product
