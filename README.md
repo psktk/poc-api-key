@@ -32,7 +32,7 @@ make setup
 This will prepare the project dependencies so you can run:
 
 ```sh
-go run main.go
+make run
 ```
 
 ## REST Client (Optional)
